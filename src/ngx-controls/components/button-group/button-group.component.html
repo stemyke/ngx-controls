@@ -1,0 +1,49 @@
+<ng-template let-option="option" #defaultItemTemplate>
+    <span class="option-image" [ngStyle]="option.imageStyle">
+        <span class="option-image-icon">
+            <span class="option-image-svg" [innerHTML]="option.image | safe" *ngIf="option.image"></span>
+            <span *ngFor="let definition of option.definitions"
+                  [ngClass]="['definition-image', 'definition-' + definition.id]" [ngStyle]="definition.imageStyle">
+                <span class="option-image-svg" [innerHTML]="definition.image | safe" *ngIf="definition.image"></span>
+            </span>
+        </span>
+    </span>
+    <span class="option-label">{{ option | formatSelectOption:labelFormatter:formatterParams }}</span>
+    <span class="option-meta" *ngIf="option.meta">{{ option.meta | translate }}</span>
+    <span class="option-toggle-visible" *ngIf="option.excluded">
+        <i icon="eye" [active]="option.visible" (click)="toggleSpecial(option, $event)"></i>
+    </span>
+</ng-template>
+<ng-template #listTemplate let-filteredGroup="filteredGroup">
+    <ng-template let-groupLabel="groupLabel" let-groupOptions="groupOptions" let-selectedOption="selectedOption" #groupTemplate>
+        <label class="button-group-label" *ngIf="groupLabel">{{ groupLabel | translate }}</label>
+        <ng-content select="[list-top]"></ng-content>
+        <ul>
+            <li *ngFor="let option of groupOptions; let index = index"
+                [ngClass]="['option', 'option-' + option.id | replace:classRegex:'-', option == selectedOption ? 'active': '', cssDisabled || !option.selectable ? 'disabled': '', option.classes || '']"
+                (click)="selectOption(option)">
+                <ng-container [ngTemplateOutlet]="itemTemplate || defaultItemTemplate"
+                              [ngTemplateOutletContext]="{option: option, index: index, selectedOption: selectedOption, labelFormatter: labelFormatter, formatterParams:formatterParams}"></ng-container>
+            </li>
+        </ul>
+        <ng-content select="[list-bottom]"></ng-content>
+    </ng-template>
+    <div [ngClass]="[cssDisabled ? 'disabled' : '', componentClass || 'button-group', commandClass + 'selector', imageClass]" *ngIf="show; else replaceTemplate">
+        <ng-content select="[main-top]"></ng-content>
+        <ng-container *ngFor="let group of selectGroups">
+            <ng-container *ngIf="!filteredGroup || filteredGroup == group.id"
+                          [ngTemplateOutlet]="groupTemplate"
+                          [ngTemplateOutletContext]="{groupLabel: !filteredGroup ? group.label : label, groupOptions: group.items, selectedOption: selectedOption}"></ng-container>
+        </ng-container>
+        <ng-content select="[main-bottom]"></ng-content>
+    </div>
+</ng-template>
+<ng-template let-listTemplate="listTemplate" let-selectedOption="selectedOption" let-selectOptions="selectOptions" #defaultWrapperTemplate>
+    <ng-container [ngTemplateOutlet]="listTemplate" [ngTemplateOutletContext]="{listOptions: selectOptions}"></ng-container>
+    <div class="tab" *ngIf="templates[selectedOption.id]">
+        <ng-container [ngTemplateOutlet]="templates[selectedOption.id]"></ng-container>
+    </div>
+</ng-template>
+<ng-container [ngTemplateOutlet]="wrapperTemplate || defaultWrapperTemplate"
+              [ngTemplateOutletContext]="this">
+</ng-container>
